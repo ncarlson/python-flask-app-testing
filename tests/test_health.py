@@ -1,42 +1,30 @@
-from unittest import mock
-from flask_testing import LiveServerTestCase
-from http import HTTPStatus
-
+import pytest
 from app.main import App
-from tests.base import AAAMixin
+
+@pytest.fixture()
+def app():
+    app = App().create_app()
+    app.config.update({
+        "TESTING": True,
+    })
+
+    # other setup can go here
+
+    yield app
+
+    # clean up / reset resources here
 
 
-class TestHealth_sick(AAAMixin, LiveServerTestCase):
-    """ Detect when mail service is in sick state """
-
-    def ARRANGE(self):
-        self.expected_health = {"mail_service": "sick"}
-        mocked_mail_service = mock.Mock(autospec=True)
-        mocked_mail_service.check = mock.MagicMock(
-            return_value=self.expected_health["mail_service"],
-        )
-        return App(
-            mail_service=mocked_mail_service,
-        ).create_app()
-
-    def ACT(self):
-        return self.client.get("/health")
-
-    def ASSERT(self):
-        assert self.response.status_code == HTTPStatus.OK
-        assert self.response.get_json() == self.expected_health
+@pytest.fixture()
+def client(app):
+    return app.test_client()
 
 
-class TestHealth_integration(AAAMixin, LiveServerTestCase):
-    """ Test against real mail service integration """
+@pytest.fixture()
+def runner(app):
+    return app.test_cli_runner()
 
-    def ARRANGE(self):
-        self.expected_health = {"mail_service": "OK"}
-        return App().create_app()
 
-    def ACT(self):
-        return self.client.get("/health")
-
-    def ASSERT(self):
-        assert self.response.status_code == HTTPStatus.OK
-        assert self.response.get_json() == self.expected_health
+def test_request_example(client):
+    response = client.get("/hello")
+    assert b"<p>hello, world</p>" in response.data
