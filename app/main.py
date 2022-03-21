@@ -30,6 +30,11 @@ class App(object):
             return "<p>hello, world</p>"
 
 
+        @app.route("/fizz", methods=["GET"])
+        def fizz():
+            return "<p>fuzz</p>"
+
+
         @app.route("/throw-exception", methods=["PUT"])
         def error():
             raise Exception("An error has occurred")
